@@ -421,7 +421,7 @@
 
                 // API Key for Gemini.
                 // Leave this as-is. Canvas will automatically provide it when running in the environment.
-                const apiKey = "";
+                const apiKey = "AIzaSyCRJeE997JfqEIzct8Qet9Fk9gYoZ1OOIs";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -439,7 +439,22 @@
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const rawJsonString = result.candidates[0].content.parts[0].text;
+                    let jsonString = rawJsonString;
+
+                    // Attempt to extract JSON if it's wrapped in markdown code block or extra text
+                    const jsonMatch = rawJsonString.match(/```json\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch && jsonMatch[1]) {
+                        jsonString = jsonMatch[1];
+                    } else {
+                        // If not a markdown block, try to find the first '{' and last '}'
+                        const firstBrace = rawJsonString.indexOf('{');
+                        const lastBrace = rawJsonString.lastIndexOf('}');
+                        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                            jsonString = rawJsonString.substring(firstBrace, lastBrace + 1);
+                        }
+                    }
+
                     try {
                         const parsedJson = JSON.parse(jsonString);
                         finalIncorrectNames = parsedJson.incorrectNames || [];
@@ -447,11 +462,13 @@
                         finalIncorrectWords = parsedJson.incorrectWords || [];
                     } catch (parseError) {
                         console.error("Failed to parse JSON from AI response:", parseError);
-                        alert("เกิดข้อผิดพลาดในการประมวลผลข้อมูลจาก AI: ไม่สามารถอ่านผลลัพธ์ได้");
+                        alert("เกิดข้อผิดพลาดในการประมวลผลข้อมูลจาก AI: ไม่สามารถอ่านผลลัพธ์ได้\n" +
+                              "โปรดลองใหม่อีกครั้ง หรือตรวจสอบรูปแบบข้อความที่ป้อน");
                     }
                 } else {
                     console.error("Unexpected AI response structure:", result);
-                    alert("เกิดข้อผิดพลาดในการรับผลลัพธ์จาก AI: โครงสร้างข้อมูลไม่ถูกต้อง");
+                    alert("เกิดข้อผิดพลาดในการรับผลลัพธ์จาก AI: โครงสร้างข้อมูลไม่ถูกต้อง\n" +
+                          "โปรดลองใหม่อีกครั้ง หรือตรวจสอบรูปแบบข้อความที่ป้อน");
                 }
 
                 // Populate Incorrect Names Table
@@ -499,7 +516,8 @@
 
             } catch (error) {
                 console.error("Error during AI processing:", error);
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อหรือประมวลผลกับ AI: " + error.message);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อหรือประมวลผลกับ AI: " + error.message +
+                      "\nโปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือลองใหม่อีกครั้ง");
             } finally {
                 // Hide loading indicator and show results
                 loadingIndicator.classList.add('hidden');
