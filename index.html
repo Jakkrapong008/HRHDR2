@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจสอบคำสั่ง โรงเรียนหางดงรัฐราษฎร์อุปถัมภ์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for better content flow */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Softer shadow */
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out; /* Fade in animation for the whole container */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 150px; /* Increased height for better text input */
+            padding: 12px;
+            border: 1px solid #d1d5db; /* Light gray border */
+            border-radius: 8px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 1em;
+            resize: vertical; /* Allow vertical resizing */
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #6366f1; /* Indigo focus color */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .process-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 25px;
+            background-image: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); /* Gradient background */
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(37, 117, 252, 0.4);
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+        .process-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 117, 252, 0.6);
+        }
+        .process-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(37, 117, 252, 0.4);
+        }
+        .process-button:disabled {
+            background-image: linear-gradient(to right, #a0a0a0 0%, #c0c0c0 100%);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .results-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            animation: slideInUp 0.8s ease-out; /* Slide in animation for results */
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #fdfdfd;
+            border-radius: 8px;
+            overflow: hidden; /* Ensures rounded corners apply to table content */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background-color: #e8f5e9; /* Light green for headers */
+            font-weight: 600;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 1px dashed #e0e0e0;
+        }
+        .message-box {
+            background-color: #ffebee; /* Light red for errors */
+            color: #d32f2f; /* Dark red text */
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(211, 47, 47, 0.1);
+        }
+        .success-box {
+            background-color: #e8f5e9; /* Light green for success */
+            color: #388e3c; /* Dark green text */
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(56, 142, 60, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8 flex items-center justify-center gap-3">
+            <span class="text-blue-600">ระบบตรวจสอบคำสั่ง</span> 🏫✨
+            <span class="text-xl text-gray-600">โรงเรียนหางดงรัฐราษฎร์อุปถัมภ์</span>
+        </h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="input-group">
+                <label for="sourceText" class="block text-gray-700 text-lg font-semibold mb-2">
+                    วางข้อความรายชื่อครูที่นี่ 🧑‍🏫
+                </label>
+                <textarea id="sourceText" placeholder="วางรายชื่อครูแต่ละคนในบรรทัดใหม่ เช่น
+นายสมชาย ใจดี
+นางสาวสุดา มีสุข
+นายจักรพงศ์ จันทวงศ์
+นางสาวสมศรี สุขใจ
+..." oninput="checkTextInputs()"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="orderText" class="block text-gray-700 text-lg font-semibold mb-2">
+                    วางข้อความคำสั่งที่นี่ 📜
+                </label>
+                <textarea id="orderText" placeholder="วางเนื้อหาคำสั่งทั้งหมดที่นี่ เพื่อตรวจสอบชื่อและคำผิด
+เช่น
+คำสั่งโรงเรียนหางดงรัฐราษฎร์อุปถัมภ์ ที่ 123/2568
+เรื่อง การปฎิบัติงานของข้าราชการครู
+1. เพื่อให้การดำเนินงานของโรงเรียนเป็นไปด้วยความเรียบร้อย
+2.1 แต่งตั้ง นายสมชายใจดี เป็นหัวหน้าโครงการ
+2.2 ให้ นางสาวสุดามีสุข ปฎิบัติหน้าที่ เลขานุการ
+3. ครูผูสอน ทุกท่านต้องร่วมมือกัน
+4. ให้ นายประยุทธ์ จันทร์โอชา เข้ามาช่วยงาน
+5. การดำเนินการนี้ต้องมีคุนภาพ
+...
+จึงเรียนมาเพื่อทราบและอนุญาตต
+..." oninput="checkTextInputs()"></textarea>
+            </div>
+        </div>
+
+        <button id="processButton" class="process-button" onclick="processText()" disabled>
+            <span id="buttonText">ประมวลผล 🚀</span>
+        </button>
+
+        <div id="loadingIndicator" class="hidden flex items-center justify-center text-blue-600 font-semibold mt-6">
+            <div class="loading-spinner"></div>
+            กำลังประมวลผล... โปรดรอสักครู่
+        </div>
+
+        <div id="resultsSection" class="results-section hidden">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6 flex items-center justify-center gap-2">
+                ผลลัพธ์การตรวจสอบ ✅
+            </h2>
+
+            <div id="nameResults" class="mb-8">
+                <h3 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <span class="text-red-500">❌</span> รายชื่อครูที่เขียนผิด
+                </h3>
+                <table id="incorrectNamesTable">
+                    <thead>
+                        <tr>
+                            <th>ชื่อจากไฟล์ต้นฉบับ</th>
+                            <th>ชื่อที่เขียนผิด</th>
+                            <th>ตำแหน่ง (หัวข้อ/บรรทัด)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+                <div id="noIncorrectNames" class="success-box mt-4 hidden">
+                    <span class="text-2xl">🎉</span> ไม่พบรายชื่อครูที่เขียนผิด
+                </div>
+
+                <h3 class="text-2xl font-semibold text-gray-700 mt-8 mb-4 flex items-center gap-2">
+                    <span class="text-orange-500">⚠️</span> รายชื่อบุคคลที่มีในคำสั่ง แต่ไม่มีในไฟล์ต้นฉบับ
+                </h3>
+                <ul id="namesNotInSourceList" class="list-disc pl-5 text-gray-700">
+                    </ul>
+                <div id="noNamesNotInSource" class="success-box mt-4 hidden">
+                    <span class="text-2xl">👍</span> ไม่พบรายชื่อบุคคลที่ไม่มีในไฟล์ต้นฉบับ
+                </div>
+            </div>
+
+            <div id="spellCheckResults">
+                <h3 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <span class="text-red-500">📝</span> คำที่เขียนผิด
+                </h3>
+                <table id="incorrectWordsTable">
+                    <thead>
+                        <tr>
+                            <th>คำที่เขียนผิด</th>
+                            <th>คำที่เขียนถูกต้อง</th>
+                            <th>ตำแหน่ง (หัวข้อ/บรรทัด)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+                <div id="noIncorrectWords" class="success-box mt-4 hidden">
+                    <span class="text-2xl">✅</span> ไม่พบคำที่เขียนผิด
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            จัดทำโดย นายจักรพงศ์ จันทวงศ์ โรงเรียนหางดงรัฐราษฎร์อุปถัมภ์ 👨‍💻
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const sourceTextarea = document.getElementById('sourceText');
+        const orderTextarea = document.getElementById('orderText');
+        const processButton = document.getElementById('processButton');
+        const buttonText = document.getElementById('buttonText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultsSection = document.getElementById('resultsSection');
+        const incorrectNamesTableBody = document.querySelector('#incorrectNamesTable tbody');
+        const namesNotInSourceList = document.getElementById('namesNotInSourceList');
+        const incorrectWordsTableBody = document.querySelector('#incorrectWordsTable tbody');
+        const noIncorrectNames = document.getElementById('noIncorrectNames');
+        const noNamesNotInSource = document.getElementById('noNamesNotInSource');
+        const noIncorrectWords = document.getElementById('noIncorrectWords');
+
+        // Helper function to find a section header by looking backwards from the current line
+        function getSectionFromLine(lineIndex, allLines) {
+            for (let i = lineIndex; i >= 0; i--) {
+                const currentLine = allLines[i].trim();
+                // Patterns for common section headers in Thai documents:
+                // 1. (Number.Number) Title (e.g., "1. บทนำ", "2.1 การปฏิบัติงาน")
+                // 2. เรื่อง Title (e.g., "เรื่อง การแต่งตั้ง")
+                // 3. ข้อ Number Title (e.g., "ข้อ 1 การดำเนินการ")
+                if (currentLine.match(/^(\d+(\.\d+)*\s+.*|เรื่อง\s+.*|ข้อ\s+\d+\s*.*)/)) {
+                    // Return the section header, truncated if too long
+                    return currentLine.length > 50 ? currentLine.substring(0, 50) + '...' : currentLine;
+                }
+            }
+            return ''; // No section found
+        }
+
+        // Function to check if both textareas have content
+        function checkTextInputs() {
+            if (sourceTextarea.value.trim() !== '' && orderTextarea.value.trim() !== '') {
+                processButton.disabled = false;
+            } else {
+                processButton.disabled = true;
+            }
+        }
+
+        // Function to process text content using Gemini API
+        async function processText() {
+            const sourceContent = sourceTextarea.value;
+            const orderContent = orderTextarea.value;
+
+            // Hide previous results and show loading indicator
+            resultsSection.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            processButton.disabled = true;
+            buttonText.innerHTML = '<div class="loading-spinner"></div> กำลังประมวลผล...';
+
+            // Clear previous results
+            incorrectNamesTableBody.innerHTML = '';
+            namesNotInSourceList.innerHTML = '';
+            incorrectWordsTableBody.innerHTML = '';
+            noIncorrectNames.classList.add('hidden');
+            noNamesNotInSource.classList.add('hidden');
+            noIncorrectWords.classList.add('hidden');
+
+            try {
+                // Construct the prompt for Gemini API
+                let chatHistory = [];
+                const prompt = `
+                    คุณคือผู้ช่วยตรวจสอบเอกสารภาษาไทย.
+                    ฉันจะให้ข้อมูล 2 ส่วน:
+                    1. 'รายชื่อครูต้นฉบับ': เป็นรายชื่อครูที่ถูกต้อง
+                    2. 'เนื้อหาคำสั่ง': เป็นเอกสารคำสั่งที่ต้องการตรวจสอบ
+
+                    งานของคุณคือ:
+                    1. ตรวจสอบ 'เนื้อหาคำสั่ง' เพื่อหาชื่อที่สะกดผิด หรือชื่อที่แตกต่างจาก 'รายชื่อครูต้นฉบับ'
+                       - หากพบชื่อที่สะกดผิดหรือแตกต่างจากรายชื่อต้นฉบับ ให้ระบุ 'ชื่อจากไฟล์ต้นฉบับ' (ที่ถูกต้อง), 'ชื่อที่เขียนผิด', และ 'ตำแหน่ง' ในเนื้อหาคำสั่ง
+                       - **สำคัญ:** หากความแตกต่างระหว่าง 'ชื่อจากต้นฉบับ' และ 'ชื่อที่เขียนผิด' เป็นเพียงการเว้นวรรคระหว่างคำ (เช่น 'สมชาย ใจดี' กับ 'สมชายใจดี', 'นายสมชาย ใจดี' กับ 'นายสมชายใจดี') **ไม่ต้องรายงานผลในส่วนนี้**
+                    2. ตรวจสอบ 'เนื้อหาคำสั่ง' เพื่อหารายชื่อบุคคลที่ปรากฏในคำสั่ง แต่ไม่มีอยู่ใน 'รายชื่อครูต้นฉบับ'
+                       - ให้ระบุ 'ชื่อ' และ 'ตำแหน่ง' ในเนื้อหาคำสั่ง
+                    3. ตรวจสอบ 'เนื้อหาคำสั่ง' เพื่อหาคำที่สะกดผิด และเสนอคำที่เขียนถูกต้อง
+                       - ให้ระบุ 'คำที่เขียนผิด', 'คำที่เขียนถูกต้อง', และ 'ตำแหน่ง' ในเนื้อหาคำสั่ง
+
+                    รูปแบบตำแหน่ง: "หัวข้อ: [ชื่อหัวข้อ], บรรทัดที่ X" (ถ้าหาหัวข้อไม่เจอ ให้เว้นว่างไว้)
+
+                    โปรดส่งผลลัพธ์ในรูปแบบ JSON โดยมีโครงสร้างดังนี้:
+                    {
+                        "incorrectNames": [
+                            { "original": "ชื่อจากต้นฉบับ", "incorrect": "ชื่อที่เขียนผิด", "location": "ตำแหน่ง" }
+                        ],
+                        "namesNotInSource": [
+                            { "name": "ชื่อบุคคล", "location": "ตำแหน่ง" }
+                        ],
+                        "incorrectWords": [
+                            { "incorrect": "คำที่เขียนผิด", "correct": "คำที่เขียนถูกต้อง", "location": "ตำแหน่ง" }
+                        ]
+                    }
+
+                    ---
+                    รายชื่อครูต้นฉบับ:
+                    ${sourceContent}
+
+                    ---
+                    เนื้อหาคำสั่ง:
+                    ${orderContent}
+                    ---
+                    `;
+
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "incorrectNames": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "original": { "type": "STRING" },
+                                            "incorrect": { "type": "STRING" },
+                                            "location": { "type": "STRING" }
+                                        },
+                                        "propertyOrdering": ["original", "incorrect", "location"]
+                                    }
+                                },
+                                "namesNotInSource": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "name": { "type": "STRING" },
+                                            "location": { "type": "STRING" }
+                                        },
+                                        "propertyOrdering": ["name", "location"]
+                                    }
+                                },
+                                "incorrectWords": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "incorrect": { "type": "STRING" },
+                                            "correct": { "type": "STRING" },
+                                            "location": { "type": "STRING" }
+                                        },
+                                        "propertyOrdering": ["incorrect", "correct", "location"]
+                                    }
+                                }
+                            },
+                            "propertyOrdering": ["incorrectNames", "namesNotInSource", "incorrectWords"]
+                        }
+                    }
+                };
+
+                // API Key for Gemini.
+                // Leave this as-is. Canvas will automatically provide it when running in the environment.
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                let finalIncorrectNames = [];
+                let finalNamesNotInSource = [];
+                let finalIncorrectWords = [];
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    try {
+                        const parsedJson = JSON.parse(jsonString);
+                        finalIncorrectNames = parsedJson.incorrectNames || [];
+                        finalNamesNotInSource = parsedJson.namesNotInSource || [];
+                        finalIncorrectWords = parsedJson.incorrectWords || [];
+                    } catch (parseError) {
+                        console.error("Failed to parse JSON from AI response:", parseError);
+                        alert("เกิดข้อผิดพลาดในการประมวลผลข้อมูลจาก AI: ไม่สามารถอ่านผลลัพธ์ได้");
+                    }
+                } else {
+                    console.error("Unexpected AI response structure:", result);
+                    alert("เกิดข้อผิดพลาดในการรับผลลัพธ์จาก AI: โครงสร้างข้อมูลไม่ถูกต้อง");
+                }
+
+                // Populate Incorrect Names Table
+                if (finalIncorrectNames.length > 0) {
+                    noIncorrectNames.classList.add('hidden');
+                    finalIncorrectNames.forEach(item => {
+                        const row = incorrectNamesTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${item.original}</td>
+                            <td class="font-bold text-red-600">${item.incorrect}</td>
+                            <td class="text-sm text-gray-500">${item.location}</td>
+                        `;
+                    });
+                } else {
+                    noIncorrectNames.classList.remove('hidden');
+                }
+
+                // Populate Names Not In Source List
+                if (finalNamesNotInSource.length > 0) {
+                    noNamesNotInSource.classList.add('hidden');
+                    finalNamesNotInSource.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'mb-1';
+                        listItem.innerHTML = `<span class="font-semibold">${item.name}</span> (${item.location})`;
+                        namesNotInSourceList.appendChild(listItem);
+                    });
+                } else {
+                    noNamesNotInSource.classList.remove('hidden');
+                }
+
+                // Populate Incorrect Words Table
+                if (finalIncorrectWords.length > 0) {
+                    noIncorrectWords.classList.add('hidden');
+                    finalIncorrectWords.forEach(item => {
+                        const row = incorrectWordsTableBody.insertRow();
+                        row.innerHTML = `
+                            <td class="font-bold text-red-600">${item.incorrect}</td>
+                            <td class="font-semibold text-green-600">${item.correct}</td>
+                            <td class="text-sm text-gray-500">${item.location}</td>
+                        `;
+                    });
+                } else {
+                    noIncorrectWords.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Error during AI processing:", error);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อหรือประมวลผลกับ AI: " + error.message);
+            } finally {
+                // Hide loading indicator and show results
+                loadingIndicator.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+                processButton.disabled = false;
+                buttonText.innerHTML = 'ประมวลผล 🚀';
+            }
+        }
+
+        // Initial check when page loads
+        checkTextInputs();
+    </script>
+</body>
+</html>
